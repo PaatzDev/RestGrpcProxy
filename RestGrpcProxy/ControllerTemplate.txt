@@ -1,0 +1,10 @@
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace RestGrpcProxy.Controllers
+{
+    [ApiController]
+    public class $CONTROLLER_NAME : ControllerBase
+    {
+$METHODS
+    }
+}

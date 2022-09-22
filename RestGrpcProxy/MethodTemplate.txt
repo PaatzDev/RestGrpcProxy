@@ -1,0 +1,6 @@
+﻿        [Route("$ROUTE")]
+        [HttpGet(Name = "$NAME")]
+        public async Task<IActionResult> $NAME()
+        {
+            return Ok();
+        }
