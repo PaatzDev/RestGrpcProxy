@@ -19,12 +19,14 @@ namespace RestGrpcProxy
                 foreach(var endoint in serviceDefinition.EndpointDefinitions)
                 {
                     var method = methodTemplate.Replace("$NAME", endoint.Name)
-                        .Replace("$ROUTE", endoint.Path);
+                        .Replace("$ROUTE", endoint.Name);
 
                     methodSrting += method;
                 }
 
                 controllerTemplate = controllerTemplate.Replace("$METHODS", methodSrting);
+
+                File.WriteAllText("test.cs", controllerTemplate);
 
                 yield return controllerTemplate;
             }

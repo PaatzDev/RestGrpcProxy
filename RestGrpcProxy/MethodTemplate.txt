@@ -1,6 +1,6 @@
-﻿        [Route("$ROUTE")]
+﻿
         [HttpGet(Name = "$NAME")]
-        public async Task<IActionResult> $NAME()
+        public IActionResult $NAME()
         {
             return Ok();
         }
