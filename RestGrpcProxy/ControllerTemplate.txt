@@ -3,6 +3,7 @@
 namespace RestGrpcProxy.Controllers
 {
     [ApiController]
+    [Route("[controller]")]
     public class $CONTROLLER_NAME : ControllerBase
     {
 $METHODS

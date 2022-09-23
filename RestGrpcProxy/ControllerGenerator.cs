@@ -4,9 +4,11 @@ using RestGrpcProxy.Models;
 namespace RestGrpcProxy
 {
     public class ControllerGenerator
-    {
+    { 
         public static IEnumerable<string> Generate(IEnumerable<ServiceDefinition> serviceDefinitions)
         {
+            
+
             foreach(var serviceDefinition in serviceDefinitions)
             {
                 var controllerTemplate = File.ReadAllText("ControllerTemplate.txt");
@@ -19,7 +21,7 @@ namespace RestGrpcProxy
                 foreach(var endoint in serviceDefinition.EndpointDefinitions)
                 {
                     var method = methodTemplate.Replace("$NAME", endoint.Name)
-                        .Replace("$ROUTE", endoint.Path);
+                        .Replace("$ROUTE", endoint.Name);
 
                     methodSrting += method;
                 }
