@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using Microsoft.AspNetCore.Mvc.Controllers;
+﻿using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using RestGrpcProxy.Generators;
+using RestGrpcProxy.Models;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
@@ -14,8 +14,11 @@ namespace RestGrpcProxy.Build
     {
         public static byte[] Compile()
         {
-            var sd = Protos.ProtoParser.Parse("Protos");
-            var source = ControllerGenerator.Generate(sd);
+            var serviceDefinitions = Protos.ProtoParser.Parse("Protos");
+
+            var messagesSource = ObjectGenerator.Generate(ServiceDefinition.MessageDefinitions);
+
+            var source = ControllerGenerator.Generate(serviceDefinitions);
 
             using (var peStream = new MemoryStream())
             {

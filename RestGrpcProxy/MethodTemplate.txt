@@ -1,4 +1,4 @@
-﻿        [HttpGet]
+﻿        [$HTTP_ATTRIBUTE]
         [Route("$ROUTE")]
         public IActionResult $NAME()
         {

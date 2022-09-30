@@ -1,0 +1,7 @@
+﻿using System;
+
+namespace RestGrpcProxy.Models.Gen{
+	public class $NAME {
+$PROPERTIES
+	}
+}
