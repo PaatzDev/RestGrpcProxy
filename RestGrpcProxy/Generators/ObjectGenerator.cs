@@ -6,7 +6,7 @@ namespace RestGrpcProxy.Generators
     {
         public static List<string> Generate(List<MessageDefinition> messages)
         {
-            var classTemplate = File.ReadAllText("ClassTemplate.txt");
+            var classTemplate = File.ReadAllText(Path.Combine("Templates", "ClassTemplate.txt"));
             var classList = new List<string>();
 
             foreach(var message in messages)

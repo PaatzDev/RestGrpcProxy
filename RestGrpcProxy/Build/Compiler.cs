@@ -4,7 +4,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using RestGrpcProxy.Generators;
 using RestGrpcProxy.Models;
+using RestGrpcProxy.Parser;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 
@@ -12,39 +14,12 @@ namespace RestGrpcProxy.Build
 {
     public class Compiler
     {
-        public static byte[] Compile()
+        public static byte[] CompileRestAssembly(ref IEnumerable<ServiceDefinition> serviceDefinitions)
         {
-            var serviceDefinitions = Protos.ProtoParser.Parse("Protos");
+            var syntaxTrees = new List<SyntaxTree>();
 
-            var messagesSource = ObjectGenerator.Generate(ServiceDefinition.MessageDefinitions);
-
-            var source = ControllerGenerator.Generate(serviceDefinitions);
-
-            using (var peStream = new MemoryStream())
-            {
-                var result = GenerateCode(source.First()).Emit(peStream);
-
-                if (!result.Success)
-                {
-                    Console.WriteLine("Compilation done with error.");
-
-                    return null;
-                }
-
-                Console.WriteLine("Compilation done without any error.");
-
-                peStream.Seek(0, SeekOrigin.Begin);
-
-                return peStream.ToArray();
-            }
-        }
-
-        private static CSharpCompilation GenerateCode(string sourceCode)
-        {
-            var codeString = SourceText.From(sourceCode);
-            var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.LatestMajor);
-
-            var parsedSyntaxTree = CSharpSyntaxTree.ParseText(codeString, options);
+            CreateMessageObjectsSyntaxTrees(ServiceDefinition.MessageDefinitions, ref syntaxTrees);
+            CreateControllerSyntaxTrees(serviceDefinitions, ref syntaxTrees);
 
             var assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
@@ -52,6 +27,8 @@ namespace RestGrpcProxy.Build
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Console).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(System.Runtime.AssemblyTargetedPatchBandAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Collections.Generic.IEnumerable<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Threading.Tasks.Task<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Microsoft.AspNetCore.Mvc.ControllerBase).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Microsoft.AspNetCore.Mvc.ControllerAttribute).Assembly.Location),
@@ -59,7 +36,8 @@ namespace RestGrpcProxy.Build
                 MetadataReference.CreateFromFile(typeof(Microsoft.AspNetCore.Mvc.HttpGetAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Microsoft.AspNetCore.Mvc.RouteAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Microsoft.AspNetCore.Mvc.IActionResult).Assembly.Location),
-                MetadataReference.CreateFromFile(Path.Combine(assemblyPath, "System.Runtime.dll"))
+                MetadataReference.CreateFromFile(Path.Combine(assemblyPath, "System.Runtime.dll")),
+                MetadataReference.CreateFromFile(typeof(Swashbuckle.AspNetCore.Annotations.SwaggerResponseAttribute).Assembly.Location)
             };
 
             var compilationOptions = new CSharpCompilationOptions(
@@ -71,47 +49,64 @@ namespace RestGrpcProxy.Build
                 , 4, null, true, false, null, null, null,
                 AssemblyIdentityComparer.Default);
 
-
-            return CSharpCompilation.Create("test.dll",
-                new[] { parsedSyntaxTree },
+            var compilation = CSharpCompilation.Create("DynamicAssembly.dll",
+                syntaxTrees,
                 references,
                 compilationOptions);
-        }
 
-        public static IEnumerable<Type> Execute(byte[] compiledAssembly)
-        {
-            return LoadAndExecute(compiledAssembly);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static IEnumerable<Type> LoadAndExecute(byte[] compiledAssembly)
-        {
-            using (var asm = new MemoryStream(compiledAssembly))
+            using(var peStream = new MemoryStream())
             {
-                var assemblyLoadContext = new SimpleUnloadableAssemblyLoadContext();
+                var result = compilation.Emit(peStream);
 
-                var assembly = assemblyLoadContext.LoadFromStream(asm);
+                if (!result.Success)
+                    return null;
 
-                var types = assembly.GetTypes();
+                peStream.Seek(0, SeekOrigin.Begin);
 
-
-                var currentAssembly = typeof(IApplicationFeatureProvider).Assembly;
-
-                return types;
+                return peStream.ToArray();
             }
         }
-    }
 
-    internal class SimpleUnloadableAssemblyLoadContext : AssemblyLoadContext
-    {
-        public SimpleUnloadableAssemblyLoadContext()
-            : base(true)
+        private static void CreateMessageObjectsSyntaxTrees(List<MessageDefinition> messageDefinitions, ref List<SyntaxTree> syntaxTrees)
         {
+           var messagesSourceCodes = ObjectGenerator.Generate(messageDefinitions);
+            foreach(var sourceCode in messagesSourceCodes)
+            {
+                var syntaxTree = BuildSyntaxTree(sourceCode);
+
+                if (syntaxTree != null)
+                    syntaxTrees.Add(syntaxTree);
+            }
         }
 
-        protected override Assembly Load(AssemblyName assemblyName)
+        private static void CreateControllerSyntaxTrees(IEnumerable<ServiceDefinition> serviceDefinitions, ref List<SyntaxTree> syntaxTrees)
         {
-            return null;
+            var controllerSources = ControllerGenerator.Generate(serviceDefinitions);
+            foreach(var controllerSource in controllerSources)
+            {
+                var syntaxTree = BuildSyntaxTree(controllerSource);
+
+                if (syntaxTree != null)
+                    syntaxTrees.Add(syntaxTree);
+            }
         }
+
+        private static SyntaxTree BuildSyntaxTree(string sourceCode)
+        {
+            var codeString = SourceText.From(sourceCode);
+            var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.LatestMajor);
+
+            var parsedSyntaxTree = CSharpSyntaxTree.ParseText(codeString, options);
+            return parsedSyntaxTree;
+        }
+
+        public static byte[] Compile()
+        {
+            var serviceDefinitions = ProtoParser.Parse("Protos");
+
+            var compiledAssembly = CompileRestAssembly(ref serviceDefinitions);
+
+            return compiledAssembly;
+        }   
     }
 }

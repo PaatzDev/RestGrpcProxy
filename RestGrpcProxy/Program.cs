@@ -1,6 +1,4 @@
 using RestGrpcProxy;
-using RestGrpcProxy.Build;
-using RestGrpcProxy.Protos;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,7 +1,7 @@
 ﻿using RestGrpcProxy.Models;
 using System.Text.RegularExpressions;
 
-namespace RestGrpcProxy.Protos
+namespace RestGrpcProxy.Parser
 {
     public class ProtoParser
     {
@@ -43,7 +43,7 @@ namespace RestGrpcProxy.Protos
                                 var matches = Regex.Match(line, @"^message\s+?(\w+)(?:\s*)");
 
                                 var messageName = matches.Groups[1].Value;
-                                var messageDefinition = new MessageDefinition { Name = messageName};
+                                var messageDefinition = new MessageDefinition { Name = messageName };
 
                                 while (!line.Contains("}"))
                                 {
@@ -91,16 +91,16 @@ namespace RestGrpcProxy.Protos
                             {
                                 var matches = Regex.Match(line, _packagePattern);
 
-                                if(matches.Groups.Count > 2)
+                                if (matches.Groups.Count > 2)
                                 {
                                     serviceDefinition.PackageName = matches.Groups[3].Value;
-                                }                                
+                                }
                             }
                             else if (line.StartsWith("service"))
                             {
                                 var matches = Regex.Match(line, _servicePattern);
 
-                                if(matches.Groups.Count > 2)
+                                if (matches.Groups.Count > 2)
                                 {
                                     serviceDefinition.ServiceName = matches.Groups[3].Value;
                                 }

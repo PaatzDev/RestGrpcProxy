@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Grpc.Net.Client" Version="2.49.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.3.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
@@ -14,10 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ControllerTemplate.txt">
+    <None Update="Templates\ControllerTemplate.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="MethodTemplate.txt">
+    <None Update="Templates\MethodTemplate.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Protos\weatherprovider.proto">
