@@ -10,7 +10,9 @@ namespace RestGrpcProxy
     {
         public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
         {
-            var compiledAssembly = Compiler.Compile();
+            var grpcLib = ProtoBuilder.Build();
+
+            var compiledAssembly = Compiler.Compile(grpcLib);
 
             var assembly = Assembly.Load(compiledAssembly);
 

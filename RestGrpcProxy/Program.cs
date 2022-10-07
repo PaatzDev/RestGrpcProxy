@@ -3,7 +3,6 @@ using RestGrpcProxy;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers()
     .ConfigureApplicationPartManager(m =>
         m.FeatureProviders.Add(new ControllerFeatureProvider()));

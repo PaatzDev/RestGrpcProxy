@@ -15,6 +15,9 @@ namespace RestGrpcProxy.Generators
                 var controllerSource = controllerTemplate.Replace("$CONTROLLER_NAME",
                     $"{serviceDefinition.ServiceName}Controller");
 
+                controllerSource = controllerSource.Replace("$GRPC_SERVICE_TYPE", "RestGrpcProxy.Protos.TestService.TestServiceClient");
+                controllerSource = controllerSource.Replace("$ADDRESS", "http://localhost:6000");
+
                 var methodSrting = "";
                 foreach (var endoint in serviceDefinition.EndpointDefinitions)
                 {
@@ -27,6 +30,8 @@ namespace RestGrpcProxy.Generators
 
                     method = method.Replace("$RESPONSE_TYPE", "RestGrpcProxy.Models." + endoint.Output.Name);
                     method = method.Replace("$INPUT_TYPE", "RestGrpcProxy.Models." + endoint.Input.Name);
+                    method = method.Replace("$GRPC_INPUT_TYPE", "RestGrpcProxy.Protos." + endoint.Input.Name);
+
                     methodSrting += method.Replace("$HTTP_ATTRIBUTE", httpAttribute);
                 }
 

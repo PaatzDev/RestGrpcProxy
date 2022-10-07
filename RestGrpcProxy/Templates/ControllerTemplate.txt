@@ -9,6 +9,13 @@ namespace RestGrpcProxy.Controllers
     [Route("[controller]")]
     public class $CONTROLLER_NAME : ControllerBase
     {
+        private readonly RestGrpcProxy.Services.GenericGrpcService<$GRPC_SERVICE_TYPE>? _grpcService;
+
+        public $CONTROLLER_NAME(){
+            _grpcService = new RestGrpcProxy.Services.GenericGrpcService<$GRPC_SERVICE_TYPE>("$ADDRESS");
+        }
+
+
 $METHODS
     }
 }
