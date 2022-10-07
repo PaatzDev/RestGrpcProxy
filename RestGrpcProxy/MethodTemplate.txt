@@ -1,6 +1,0 @@
-﻿        [HttpGet]
-        [Route("$ROUTE")]
-        public IActionResult $NAME()
-        {
-            return Ok("Hello from $NAME");
-        }

@@ -1,18 +1,15 @@
 using RestGrpcProxy;
-using RestGrpcProxy.Build;
-using RestGrpcProxy.Protos;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers()
     .ConfigureApplicationPartManager(m =>
         m.FeatureProviders.Add(new ControllerFeatureProvider()));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c => c.EnableAnnotations());
 
 var app = builder.Build();
 
