@@ -1,5 +1,8 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using RestGrpcProxy.Models;
+using RestGrpcProxy.Services;
+using System.Text.RegularExpressions;
 
 namespace RestGrpcProxy.Generators
 {
@@ -15,8 +18,16 @@ namespace RestGrpcProxy.Generators
                 var controllerSource = controllerTemplate.Replace("$CONTROLLER_NAME",
                     $"{serviceDefinition.ServiceName}Controller");
 
-                controllerSource = controllerSource.Replace("$GRPC_SERVICE_TYPE", "RestGrpcProxy.Protos.TestService.TestServiceClient");
-                controllerSource = controllerSource.Replace("$ADDRESS", "http://localhost:6000");
+                controllerSource = controllerSource.Replace("$GRPC_SERVICE_TYPE", $"{serviceDefinition.Namespace}." +
+                    $"{serviceDefinition.ServiceName}.{serviceDefinition.ServiceName}Client");
+
+                var configService = new ConfigurationService();
+
+                var address = configService.Config.addresses.Where(x => x.ServiceName == serviceDefinition.ServiceName)
+                    .FirstOrDefault();
+
+                if(address != null)
+                    controllerSource = controllerSource.Replace("$ADDRESS", address.Address);
 
                 var methodSrting = "";
                 foreach (var endoint in serviceDefinition.EndpointDefinitions)
@@ -24,13 +35,16 @@ namespace RestGrpcProxy.Generators
                     var method = methodTemplate.Replace("$NAME", endoint.Name)
                         .Replace("$ROUTE", endoint.Name.ToLower());
 
-                    var httpAttribute = "HttpPost";
-                    //if (!endoint.Input.Properties.Any())
-                    //    httpAttribute = "HttpGet";
+                    method = method.Replace("$RESPONSE_TYPE", $"{endoint.Output.Namespace}.{endoint.Output.Name}");
+                    method = method.Replace("$INPUT_TYPE", $"{endoint.Input.Namespace}.{endoint.Input.Name}");
 
-                    method = method.Replace("$RESPONSE_TYPE", "RestGrpcProxy.Models." + endoint.Output.Name);
-                    method = method.Replace("$INPUT_TYPE", "RestGrpcProxy.Models." + endoint.Input.Name);
-                    method = method.Replace("$GRPC_INPUT_TYPE", "RestGrpcProxy.Protos." + endoint.Input.Name);
+                    var httpAttribute = "HttpPost";
+                    if (!endoint.Input.Properties.Any())
+                    {
+                        httpAttribute = "HttpGet";
+                        method = Regex.Replace(method, @"\[FromBody].+? input", "");
+                        method = method.Replace("input", $"new {endoint.Input.Namespace}.{endoint.Input.Name}()");
+                    }
 
                     methodSrting += method.Replace("$HTTP_ATTRIBUTE", httpAttribute);
                 }
@@ -40,7 +54,5 @@ namespace RestGrpcProxy.Generators
                 yield return controllerSource;
             }
         }
-
-
     }
 }

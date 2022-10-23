@@ -1,0 +1,11 @@
+{
+  "addresses": [
+    {
+      "ServiceName": "TestService",
+      "Address": "http://localhost:6000"
+    }
+  ],
+  "ServiceName": "Skylinx App Api",
+  "ServiceDescription": "This API allows access to the endpoints of the Skylinx Application backend",
+  "ServiceVersion": "22.24.1"
+}

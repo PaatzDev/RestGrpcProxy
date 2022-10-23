@@ -5,9 +5,10 @@ namespace RestGrpcProxy.Parser
 {
     public class ProtoParser
     {
-        private readonly static string _packagePattern = @"^(package)(\s+)([\w*.?]+)(;)";
+        //TODO: Fix and improve parsing of messages
         private readonly static string _servicePattern = @"^(service)(\s+)(\w+)(\s*)({?)";
         private readonly static string _rpcPattern = @"(rpc\s+)(\w+)(\s*\(\s*)(\w+)(\s*\)\s*returns\s*\(\s*)(\w+)(\s*\);)";
+        private readonly static string _namespacePattern = $".*?option\\s+?$OPTION_NAME\\s+?=\\s+?\\\"(.*?)\\\";";
 
         public static IEnumerable<ServiceDefinition> Parse(string protoPath)
         {
@@ -34,16 +35,27 @@ namespace RestGrpcProxy.Parser
                 {
                     using (var reader = new StreamReader(fileStream))
                     {
+                        var namespaceName = "";
+                        
                         while (!reader.EndOfStream)
                         {
                             var line = reader.ReadLine().Trim();
 
+                            var namespaceMatch = Regex.Match(line, _namespacePattern.Replace("$OPTION_NAME", "java_package"));
+                            if (namespaceMatch.Success)
+                            {
+                                namespaceName = namespaceMatch.Groups[1].Value;
+                            }
+                            
                             if (line.StartsWith("message"))
                             {
                                 var matches = Regex.Match(line, @"^message\s+?(\w+)(?:\s*)");
 
                                 var messageName = matches.Groups[1].Value;
-                                var messageDefinition = new MessageDefinition { Name = messageName };
+                                var messageDefinition = new MessageDefinition { 
+                                    Name = messageName,
+                                    Namespace = namespaceName
+                                };
 
                                 while (!line.Contains("}"))
                                 {
@@ -76,7 +88,6 @@ namespace RestGrpcProxy.Parser
         {
             foreach (var file in files)
             {
-
                 using (var fileStream = file.OpenRead())
                 {
                     using (var reader = new StreamReader(fileStream))
@@ -87,16 +98,11 @@ namespace RestGrpcProxy.Parser
                         {
                             var line = reader.ReadLine();
 
-                            if (line.StartsWith("package"))
-                            {
-                                var matches = Regex.Match(line, _packagePattern);
+                            var matched = Regex.Match(line, _namespacePattern.Replace("$OPTION_NAME", "java_package"));
+                            if(matched.Success)
+                                serviceDefinition.Namespace = matched.Groups[1].Value;
 
-                                if (matches.Groups.Count > 2)
-                                {
-                                    serviceDefinition.PackageName = matches.Groups[3].Value;
-                                }
-                            }
-                            else if (line.StartsWith("service"))
+                            if (line.StartsWith("service"))
                             {
                                 var matches = Regex.Match(line, _servicePattern);
 

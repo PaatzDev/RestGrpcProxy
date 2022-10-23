@@ -82,6 +82,8 @@ namespace RestGrpcProxy.Build
             CreateMessageObjectsSyntaxTrees(ServiceDefinition.MessageDefinitions, ref syntaxTrees);
             CreateControllerSyntaxTrees(serviceDefinitions, ref syntaxTrees);
 
+            Console.WriteLine("Compiling rest api source code...");
+
             var assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
             var references = new MetadataReference[] {
@@ -129,6 +131,7 @@ namespace RestGrpcProxy.Build
 
                 peStream.Seek(0, SeekOrigin.Begin);
 
+                Console.WriteLine("Done compiling rest api source code.");
                 return peStream.ToArray();
             }
         }
@@ -147,7 +150,10 @@ namespace RestGrpcProxy.Build
 
         private static void CreateControllerSyntaxTrees(IEnumerable<ServiceDefinition> serviceDefinitions, ref List<SyntaxTree> syntaxTrees)
         {
+            Console.WriteLine("Starting rest api source code generation...");
             var controllerSources = ControllerGenerator.Generate(serviceDefinitions);
+            Console.WriteLine("Done creating rest api source code.");
+
             foreach(var controllerSource in controllerSources)
             {
                 var syntaxTree = BuildSyntaxTree(controllerSource);

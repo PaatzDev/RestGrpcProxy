@@ -3,7 +3,7 @@
         [SwaggerResponse(200, null, typeof($RESPONSE_TYPE), new[]{"application/json","text/plain"})]
         public async System.Threading.Tasks.Task<IActionResult> $NAME([FromBody]$INPUT_TYPE input)
         {
-            var response = _grpcService.GrpcClient.$NAME(new $GRPC_INPUT_TYPE());
+            var response = _grpcService.GrpcClient.$NAME(input);
 
             return Ok(response);
         }
